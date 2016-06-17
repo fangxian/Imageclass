@@ -7,6 +7,7 @@
 
 #include <cstdint>
 #include <cassert>
+#include <curses.h>
 #include "Dim2u.h"
 #include "Position2u.h"
 
@@ -22,9 +23,11 @@ namespace Im {
         typedef T ValueType;
         typedef uint32_t SizeType;
 
-        Image(Dim2u dim, T *data) : _width(dim.width), _height(dim.height), _data(data) { };
-        Image() :_width(0), _height(0), _data(0) {};
+        Image(Dim2u dim, ValueType *data) : _width(dim.width), _height(dim.height), _stride(dim.width), _data(data) { };
+        Image() :_width(0), _height(0), _stride(0), _data(0) {};
 
+        Image(Dim2u dim, SizeType stride, ValueType *data) :
+                _stride(stride), _width(dim.width), _height(dim.width), _data(data) { };
         ~Image() { };
 
         Dim2u getDimension() const;
@@ -51,7 +54,6 @@ namespace Im {
         ValueType* _data;
     };
 
-
     //get the image data
     template<typename T>
     typename Image<T>::ValueType* Image<T>::getData() const
@@ -73,16 +75,48 @@ namespace Im {
     template<typename T>
     typename Image<T>::ValueType Image<T>::getPixel(const Position2u &pos) const
     {
-        assert(getIndex(pos) < _height * _width);
-        return _data[pos.x * _width + pos.y];
+        assert(isInImage(pos));
+        return _data[pos.x * _stride + pos.y];
+    }
+
+    template <typename T>
+    typename Image<T>::SizeType Image<T>::getStride() const
+    {
+        return _stride;
+    }
+
+    template <typename T>
+    typename Image<T>::SizeType Image<T>::getHeight() const
+    {
+        return _height;
+    }
+
+    template <typename T>
+    typename Image<T>::SizeType Image<T>::getWidth() const
+    {
+        return _width;
+    }
+
+    template <typename T>
+    void Image<T>::setData(ValueType *data)
+    {
+        _data = data;
+    }
+
+    template <typename T>
+    void Image<T>::setDimension(const Dim2u &dim)
+    {
+        _width = dim.width;
+        _height = dim.height;
+        _stride = dim.width;
     }
     //to do
     //set the pixel value
     template <typename T>
     void Image<T>::setPixel(const Position2u &pos, T val)
     {
-        uint32_t stride= getStride();
-        _data[pos.x * stride + pos.y] = val;
+        assert(isInImage(pos));
+        _data[pos.x * _stride + pos.y] = val;
     }
 
     //to do...
@@ -90,10 +124,19 @@ namespace Im {
     template <typename T>
     typename Image<T>::SizeType Image<T>::getIndex(const Position2u &pos) const
     {
+        assert(isInImage(pos));
         uint32_t index;
-        uint32_t stride = getStride();
-        index = pos.x * stride + pos.y;
+        assert(isInImage(pos));
+        index = pos.x * _stride + pos.y;
         return index;
+    }
+    template <typename T>
+    bool Image<T>::isInImage(const Position2u &pos) const
+    {
+        if(pos.x > 0 && pos.x <= _width)
+            if(pos.y > 0 && pos.y <= _height)
+                return true;
+        return false;
     }
 
 }
