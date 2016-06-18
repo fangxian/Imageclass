@@ -13,9 +13,10 @@ namespace Im
     {
         Dim2u();
         Dim2u(uint32_t w, uint32_t h): width(w), height(h) {};
-        ~Dim2u();
+        //~Dim2u();
         uint32_t width;
         uint32_t height;
+
     };
 }
 

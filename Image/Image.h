@@ -7,7 +7,8 @@
 
 #include <cstdint>
 #include <cassert>
-#include <curses.h>
+#include <limits>
+#include <string.h>
 #include "Dim2u.h"
 #include "Position2u.h"
 
@@ -40,6 +41,8 @@ namespace Im {
         ValueType getPixel(const Position2u &pos) const;
         ValueType* getData() const;
 
+        void generateRNDImage();
+        void generateSpecPixelImage(ValueType small, ValueType big);
         void setDimension(const Dim2u& dim);
         void setPixel(const Position2u &pos, T val);
         void setData(ValueType* data);
@@ -79,30 +82,35 @@ namespace Im {
         return _data[pos.x * _stride + pos.y];
     }
 
+    //get image stride
     template <typename T>
     typename Image<T>::SizeType Image<T>::getStride() const
     {
         return _stride;
     }
 
+    //get the height of image
     template <typename T>
     typename Image<T>::SizeType Image<T>::getHeight() const
     {
         return _height;
     }
 
+    //get the width of the image
     template <typename T>
     typename Image<T>::SizeType Image<T>::getWidth() const
     {
         return _width;
     }
 
+    //copy the data to the image _data
     template <typename T>
     void Image<T>::setData(ValueType *data)
     {
         _data = data;
     }
 
+    //set the width, height and stride
     template <typename T>
     void Image<T>::setDimension(const Dim2u &dim)
     {
@@ -119,8 +127,7 @@ namespace Im {
         _data[pos.x * _stride + pos.y] = val;
     }
 
-    //to do...
-    //get the index of image, get the x axis and y axis
+    //get the index of image
     template <typename T>
     typename Image<T>::SizeType Image<T>::getIndex(const Position2u &pos) const
     {
@@ -130,6 +137,8 @@ namespace Im {
         index = pos.x * _stride + pos.y;
         return index;
     }
+
+    //judge the position is in the image
     template <typename T>
     bool Image<T>::isInImage(const Position2u &pos) const
     {
@@ -137,6 +146,35 @@ namespace Im {
             if(pos.y > 0 && pos.y <= _height)
                 return true;
         return false;
+    }
+
+    //generate the image data randomly
+    template <typename T>
+    void Image<T>::generateRNDImage()
+    {
+        SizeType length = _width * _height;
+        uint32_t* buffer = new uint32_t[length];
+        ValueType limit_min = std::numeric_limits<ValueType >::min();
+        ValueType limit_max = std::numeric_limits<ValueType >::max();
+        for(uint32_t i =0; i < length; i++)
+        {
+            buffer[i] = (rand())%(limit_max-limit_min) + limit_min; //generate pixel value in limit_min~limit_max
+        }
+        memcpy(_data, (T *)buffer, length);
+
+    }
+
+    //generate the image data which in the section between a and b
+    template <typename T>
+    void Image<T>::generateSpecPixelImage(ValueType small, ValueType big)
+    {
+        SizeType length = _width * _height;
+        uint32_t* buffer = new uint32_t[length];
+        for(uint32_t i =0; i < length; i++)
+        {
+            buffer[i] = (rand())%(big-small) + small; //generate pixel value in limit_min~limit_max
+        }
+        memcpy(_data, (T *)buffer, length);
     }
 
 }
